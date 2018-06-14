@@ -121,9 +121,14 @@
                     writeLog(`[${msg.G}] recieved new state for group`);
                     setLocalState(msg.G, msg.D)
                 break;
+                case 'partialstateupdate':
+                    writeLog(`[${msg.G}] recieved partial state update`);
+                    setLocalState(msg.G, msg.D)
+                break;
                 case 'blockupdate':
                     writeLog(`[${msg.G}] has had a block update`);
                     setLocalState(msg.G, msg.D)
+                break;
             }
         }
 
