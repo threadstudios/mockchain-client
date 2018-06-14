@@ -96,10 +96,13 @@
 
         var actionEmitter = (a, data) => {
             writeLog(`sending data packet ${a}`);
-            socket.send(JSON.stringify({
-                A : a,
-                ...data
-            }))
+            var packet = {
+                A : a
+            };  
+            for(var x in data) {
+                packet[x] = data[x];
+            } 
+            socket.send(JSON.stringify(packet))
         }
 
         var actionParser = (msg) => {
@@ -146,6 +149,40 @@
             }))
         }
 
+        listeners[`BG:A1:${window.localStorage.getItem('eng')}`] = [
+            (data) => {
+                if(data.state.jobs) {
+                    const workList = document.querySelector('.work');
+                    Array.from(workList.children).forEach(child => workList.removeChild(child));
+                    for(var x in data.state.jobs) {
+                        var job = data.state.jobs[x];
+                        var li = document.createElement('li');
+                        var desc = document.createElement('p');
+                        desc.innerText = job.desc;
+                        var btn = document.createElement('button');
+                        btn.innerText = job.status === 'awaiting' ? 'En-Route' : 'Complete';
+                        btn.onclick = (e) => {
+                            actionEmitter('startwork', {
+                                G : `BG:A1:${window.localStorage.getItem('eng')}`,
+                                D : {
+                                    job : {
+                                        id : job.id,
+                                        status : job.status === 'awaiting' ? 'working' : 'done'
+                                    }
+                                },
+                                L : data.last
+                            })
+                        }
+                        li.appendChild(desc);
+                        if(job.status !== 'done'){
+                            li.appendChild(btn);
+                        }
+                        workList.append(li);
+                    }
+                }
+            }
+        ];
+
     </script>
     <div>
         <div class="form">
@@ -180,41 +217,6 @@
         </script>
         <ul class="work">
         </ul>
-        <script>
-            listeners[`BG:A1:${window.localStorage.getItem('eng')}`] = [
-                (data) => {
-                    if(data.state.jobs) {
-                        const workList = document.querySelector('.work');
-                        Array.from(workList.children).forEach(child => workList.removeChild(child));
-                        for(var x in data.state.jobs) {
-                            var job = data.state.jobs[x];
-                            var li = document.createElement('li');
-                            var desc = document.createElement('p');
-                            desc.innerText = job.desc;
-                            var btn = document.createElement('button');
-                            btn.innerText = job.status === 'awaiting' ? 'En-Route' : 'Complete';
-                            btn.onclick = (e) => {
-                                actionEmitter('startwork', {
-                                    G : `BG:A1:${window.localStorage.getItem('eng')}`,
-                                    D : {
-                                        job : {
-                                            id : job.id,
-                                            status : job.status === 'awaiting' ? 'working' : 'done'
-                                        }
-                                    },
-                                    L : data.last
-                                })
-                            }
-                            li.appendChild(desc);
-                            if(job.status !== 'done'){
-                                li.appendChild(btn);
-                            }
-                            workList.append(li);
-                        }
-                    }
-                }
-            ];
-        </script>
         <code class="result">
         </code>
     </div>
